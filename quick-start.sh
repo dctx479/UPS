@@ -30,22 +30,34 @@ echo ""
 # Setup environment file
 echo "[2/5] Setting up environment..."
 if [ ! -f .env ]; then
-    echo "Creating .env file with default values..."
+    echo "⚠️  Creating .env file with secure random passwords..."
+
+    # Generate strong random passwords
+    MYSQL_ROOT_PASSWORD=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-24)
+    MYSQL_PASSWORD=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-24)
+    MONGO_PASSWORD=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-24)
+    REDIS_PASSWORD=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-24)
+    JWT_SECRET=$(openssl rand -base64 48 | tr -d "=+/" | cut -c1-48)
+
     cat > .env << EOF
+# ⚠️ AUTO-GENERATED CREDENTIALS - SAVE THESE SECURELY!
 # Database Credentials
-MYSQL_ROOT_PASSWORD=root123
+MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
 MYSQL_USER=userservice
-MYSQL_PASSWORD=userservice123
+MYSQL_PASSWORD=${MYSQL_PASSWORD}
 
 MONGO_USERNAME=admin
-MONGO_PASSWORD=admin123
+MONGO_PASSWORD=${MONGO_PASSWORD}
 
-REDIS_PASSWORD=redis123
+REDIS_PASSWORD=${REDIS_PASSWORD}
 
-# JWT Secret
-JWT_SECRET=$(openssl rand -base64 32)
+# JWT Secret (48 characters)
+JWT_SECRET=${JWT_SECRET}
 EOF
-    echo "✅ Environment file created"
+
+    echo "✅ Environment file created with secure random passwords"
+    echo "⚠️  IMPORTANT: Credentials saved to .env file"
+    echo "   Please backup this file securely!"
 else
     echo "✅ Environment file already exists"
 fi

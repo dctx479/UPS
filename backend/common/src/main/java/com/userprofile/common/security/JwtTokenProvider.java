@@ -8,18 +8,24 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * JWT令牌提供者
+ *
+ * ⚠️ 安全配置要求：
+ * 1. 必须在application.yml或环境变量中配置jwt.secret
+ * 2. jwt.secret长度至少32个字符（256位）
+ * 3. 生产环境严禁使用默认密钥
  */
 @Slf4j
 @Component
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret:userprofile-secret-key-change-in-production-min-256-bits-required}")
+    @Value("${jwt.secret:}")
     private String jwtSecret;
 
     @Value("${jwt.expiration:86400000}")  // 默认24小时
@@ -32,6 +38,7 @@ public class JwtTokenProvider {
      * 生成访问令牌
      */
     public String generateToken(String username) {
+        validateSecretKey();
         return generateToken(username, new HashMap<>());
     }
 
@@ -39,14 +46,15 @@ public class JwtTokenProvider {
      * 生成访问令牌（带额外声明）
      */
     public String generateToken(String username, Map<String, Object> claims) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+        validateSecretKey();
+        Instant now = Instant.now();
+        Instant expiryDate = now.plusMillis(jwtExpirationMs);
 
         return Jwts.builder()
                 .subject(username)
                 .claims(claims)
-                .issuedAt(now)
-                .expiration(expiryDate)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiryDate))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -55,14 +63,15 @@ public class JwtTokenProvider {
      * 生成刷新令牌
      */
     public String generateRefreshToken(String username) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtRefreshExpirationMs);
+        validateSecretKey();
+        Instant now = Instant.now();
+        Instant expiryDate = now.plusMillis(jwtRefreshExpirationMs);
 
         return Jwts.builder()
                 .subject(username)
                 .claim("type", "refresh")
-                .issuedAt(now)
-                .expiration(expiryDate)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiryDate))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -116,7 +125,7 @@ public class JwtTokenProvider {
     public boolean isTokenExpired(String token) {
         try {
             Claims claims = getClaimsFromToken(token);
-            return claims.getExpiration().before(new Date());
+            return claims.getExpiration().before(Date.from(Instant.now()));
         } catch (ExpiredJwtException ex) {
             return true;
         }
@@ -126,6 +135,7 @@ public class JwtTokenProvider {
      * 刷新令牌
      */
     public String refreshToken(String token) {
+        validateSecretKey();
         Claims claims = getClaimsFromToken(token);
         String username = claims.getSubject();
 
@@ -143,6 +153,20 @@ public class JwtTokenProvider {
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    /**
+     * 验证密钥配置
+     */
+    private void validateSecretKey() {
+        if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
+            log.error("JWT密钥未配置！请在application.yml或环境变量中设置jwt.secret");
+            throw new IllegalStateException("JWT密钥未配置，系统无法启动。请设置jwt.secret环境变量。");
+        }
+        if (jwtSecret.length() < 32) {
+            log.error("JWT密钥长度不足！当前长度: {}, 要求至少32个字符", jwtSecret.length());
+            throw new IllegalStateException("JWT密钥长度不足，至少需要32个字符（256位）。");
+        }
     }
 
     /**

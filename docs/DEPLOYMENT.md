@@ -66,23 +66,43 @@ docker-compose ps
 
 ### 环境配置
 
+⚠️ **安全警告**：生产环境必须修改所有默认密码和密钥！
+
 **.env 配置项**:
 ```env
+# ⚠️ 以下为示例值，生产环境必须修改！
+
 # MySQL配置
-MYSQL_ROOT_PASSWORD=root123
+MYSQL_ROOT_PASSWORD=CHANGE_THIS_IN_PRODUCTION
 MYSQL_USER=userservice
-MYSQL_PASSWORD=userservice123
+MYSQL_PASSWORD=CHANGE_THIS_IN_PRODUCTION
 
 # MongoDB配置
 MONGO_USERNAME=admin
-MONGO_PASSWORD=admin123
+MONGO_PASSWORD=CHANGE_THIS_IN_PRODUCTION
 
 # Redis配置
-REDIS_PASSWORD=redis123
+REDIS_PASSWORD=CHANGE_THIS_IN_PRODUCTION
 
-# JWT密钥（生产环境必须修改）
-JWT_SECRET=your_jwt_secret_key_at_least_32_chars
+# JWT密钥（必须至少32个字符，推荐48个字符）
+# 生成方法: openssl rand -base64 48
+JWT_SECRET=CHANGE_THIS_JWT_SECRET_KEY_AT_LEAST_32_CHARS_REQUIRED
 ```
+
+**生成安全密钥**:
+```bash
+# 生成强随机密码（24字符）
+openssl rand -base64 24 | tr -d "=+/"
+
+# 生成JWT密钥（48字符）
+openssl rand -base64 48 | tr -d "=+/"
+```
+
+**快速部署注意事项**:
+- 使用 `quick-start.sh` 会自动生成随机密码
+- 生成的密码保存在 `.env` 文件中
+- 请务必备份 `.env` 文件！
+- 首次部署后会在控制台显示生成的密码
 
 ### 健康检查
 ```bash
@@ -368,17 +388,66 @@ tar -czf config_backup_$(date +%Y%m%d).tar.gz \
 
 ## 安全加固
 
-### 1. 网络隔离
+### 1. JWT密钥安全
+
+⚠️ **关键安全配置**：
+
+JWT密钥必须通过环境变量配置，系统启动时会验证：
+- 密钥不能为空
+- 密钥长度至少32个字符（256位）
+- 如果未配置或长度不足，系统将拒绝启动
+
+**配置方法**：
+```bash
+# 方式1：通过.env文件
+JWT_SECRET=$(openssl rand -base64 48 | tr -d "=+/")
+
+# 方式2：通过环境变量
+export JWT_SECRET="your-strong-secret-key-at-least-32-characters"
+
+# 方式3：在docker-compose.yml中配置
+environment:
+  - JWT_SECRET=${JWT_SECRET}
+```
+
+**验证配置**：
+系统启动日志会显示JWT配置状态，如果看到以下错误，请检查配置：
+- "JWT密钥未配置！" - 需要设置jwt.secret环境变量
+- "JWT密钥长度不足！" - 密钥至少需要32个字符
+
+### 2. 网络隔离
 - 数据库不对外暴露
 - 仅Gateway暴露公网
 - 使用防火墙规则
 
-### 2. 密码安全
-- 所有默认密码必须修改
-- 使用强密码（16位+混合字符）
-- 定期轮换密码
+### 3. 密码安全策略
 
-### 3. SSL/TLS
+⚠️ **强制安全要求**：
+
+**密码强度要求**：
+- 所有默认密码必须修改
+- 最小长度：16个字符
+- 必须包含：大小写字母、数字、特殊字符
+- 定期轮换密码（建议每90天）
+
+**数据库密码管理**：
+```bash
+# 生产环境禁止使用以下弱密码：
+# ❌ root123, admin123, userservice123, redis123
+
+# 使用强随机密码（推荐）:
+# ✅
+MYSQL_ROOT_PASSWORD=$(openssl rand -base64 24 | tr -d "=+/")
+MONGO_PASSWORD=$(openssl rand -base64 24 | tr -d "=+/")
+REDIS_PASSWORD=$(openssl rand -base64 24 | tr -d "=+/")
+```
+
+**密钥存储建议**：
+- 开发环境：使用 `.env` 文件（加入 .gitignore）
+- 测试环境：使用环境变量
+- 生产环境：使用密钥管理服务（Vault, AWS Secrets Manager, Azure Key Vault）
+
+### 4. SSL/TLS
 ```yaml
 # Gateway配置HTTPS
 server:
@@ -389,13 +458,28 @@ server:
     key-store-type: PKCS12
 ```
 
-### 4. 限流配置
+### 5. 限流配置
 根据实际业务调整限流参数:
 ```yaml
 redis-rate-limiter:
   replenishRate: 100  # 调整为合适的值
   burstCapacity: 200
 ```
+
+### 6. 安全检查清单
+
+部署前请确认：
+
+- [ ] 所有默认密码已修改
+- [ ] JWT密钥长度≥32个字符
+- [ ] .env文件已加入.gitignore
+- [ ] 数据库仅内网访问
+- [ ] Redis已配置密码
+- [ ] 已配置HTTPS（生产环境）
+- [ ] 已配置防火墙规则
+- [ ] 已配置日志审计
+- [ ] 已配置监控告警
+- [ ] 已配置定期备份
 
 ---
 

@@ -76,7 +76,7 @@ API Gateway (8080)
       ↓
 ┌─────┴─────┬──────────┬──────────┐
 ↓           ↓          ↓          ↓
-User     Profile  Behavior    Consul
+User     Profile     Tag       Consul
 Service  Service  Service  (Registry)
 (8081)   (8082)   (8083)     (8500)
 ↓           ↓          ↓
@@ -109,7 +109,6 @@ UPS/
 │   ├── gateway-service/    # API网关
 │   ├── user-service/       # 用户服务
 │   ├── profile-service/    # 画像服务
-│   ├── behavior-service/   # 行为服务
 │   └── tag-service/        # 标签服务
 ├── flutter-app/            # Flutter前端
 ├── scripts/                # 数据库初始化脚本
@@ -136,7 +135,7 @@ mvn spring-boot:run
 cd backend/profile-service
 mvn spring-boot:run
 
-cd backend/behavior-service
+cd backend/tag-service
 mvn spring-boot:run
 
 cd backend/gateway-service
@@ -169,17 +168,11 @@ mvn test -Dtest=*IntegrationTest
 - 用户类型分析
 - 价值评估
 
-### 行为分析
-- 用户行为追踪
-- 行为统计分析
-- 活跃度计算
-- 偏好分析
-
 ### 标签管理
 - 灵活的标签系统
 - 标签权重管理
 - 批量操作
-- 标签去重
+- 标签分类
 
 ## 🔐 安全特性
 

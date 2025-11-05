@@ -67,7 +67,7 @@ chmod +x deploy.sh
 | Gateway | 8080 | API网关 |
 | User Service | 8081 | 用户服务 |
 | Profile Service | 8082 | 画像服务 |
-| Behavior Service | 8083 | 行为服务 |
+| Tag Service | 8083 | 标签服务 |
 | Consul | 8500 | 服务注册中心 |
 | MySQL | 3306 | 用户数据库 |
 | MongoDB | 27017 | 画像数据库 |

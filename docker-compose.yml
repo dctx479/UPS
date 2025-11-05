@@ -197,12 +197,12 @@ services:
       retries: 3
       start_period: 90s
 
-  # Behavior Service
-  behavior-service:
+  # Tag Service
+  tag-service:
     build:
       context: ./backend
-      dockerfile: behavior-service/Dockerfile
-    container_name: ups-behavior-service
+      dockerfile: tag-service/Dockerfile
+    container_name: ups-tag-service
     ports:
       - "8083:8083"
     environment:

@@ -1,0 +1,194 @@
+groups:
+  - name: userprofile-alerts
+    interval: 30s
+    rules:
+      # 服务可用性告警
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: sre
+        annotations:
+          summary: "服务不可用: {{ $labels.job }}"
+          description: "{{ $labels.job }} 已经down超过1分钟"
+
+      # HTTP错误率告警
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (service)
+            /
+            sum(rate(http_server_requests_seconds_count[5m])) by (service)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "高错误率: {{ $labels.service }}"
+          description: "{{ $labels.service }} 5xx错误率超过5%，当前值: {{ $value | humanizePercentage }}"
+
+      # 响应时间告警
+      - alert: SlowResponse
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_server_requests_seconds_bucket[5m])) by (le, service)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "响应时间过慢: {{ $labels.service }}"
+          description: "{{ $labels.service }} P95响应时间超过1秒，当前值: {{ $value }}s"
+
+      # JVM内存告警
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            jvm_memory_used_bytes{area="heap"}
+            /
+            jvm_memory_max_bytes{area="heap"}
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "内存使用率过高: {{ $labels.service }}"
+          description: "{{ $labels.service }} 堆内存使用率超过90%，当前值: {{ $value | humanizePercentage }}"
+
+      # GC时间告警
+      - alert: HighGCTime
+        expr: |
+          rate(jvm_gc_pause_seconds_sum[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "GC时间过长: {{ $labels.service }}"
+          description: "{{ $labels.service }} GC时间占比超过10%"
+
+      # 线程数告警
+      - alert: HighThreadCount
+        expr: jvm_threads_live_threads > 200
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "线程数过多: {{ $labels.service }}"
+          description: "{{ $labels.service }} 线程数超过200，当前值: {{ $value }}"
+
+      # 数据库连接池告警
+      - alert: DatabaseConnectionPoolLow
+        expr: |
+          (
+            hikaricp_connections_active
+            /
+            hikaricp_connections_max
+          ) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "数据库连接池使用率高: {{ $labels.service }}"
+          description: "{{ $labels.service }} 数据库连接池使用率超过80%"
+
+      # Redis连接告警
+      - alert: RedisConnectionError
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Redis不可用"
+          description: "Redis连接失败"
+
+      # 磁盘空间告警
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint="/"}
+            /
+            node_filesystem_size_bytes{mountpoint="/"}
+          ) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: sre
+        annotations:
+          summary: "磁盘空间不足"
+          description: "根分区可用空间低于10%，当前值: {{ $value | humanizePercentage }}"
+
+      # CPU使用率告警
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: sre
+        annotations:
+          summary: "CPU使用率过高: {{ $labels.instance }}"
+          description: "CPU使用率超过80%，当前值: {{ $value }}%"
+
+      # 定时任务失败告警
+      - alert: ScheduledTaskFailure
+        expr: |
+          increase(scheduled_tasks_total{result="failure"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "定时任务失败: {{ $labels.task }}"
+          description: "定时任务 {{ $labels.task }} 执行失败"
+
+      # 缓存命中率低
+      - alert: LowCacheHitRate
+        expr: |
+          (
+            sum(rate(cache_requests_total{result="hit"}[5m])) by (cache)
+            /
+            sum(rate(cache_requests_total[5m])) by (cache)
+          ) < 0.5
+        for: 10m
+        labels:
+          severity: info
+          team: backend
+        annotations:
+          summary: "缓存命中率低: {{ $labels.cache }}"
+          description: "缓存 {{ $labels.cache }} 命中率低于50%，当前值: {{ $value | humanizePercentage }}"
+
+      # 业务指标：高价值用户数下降
+      - alert: HighValueUsersDecreasing
+        expr: |
+          (
+            users_high_value_count
+            /
+            users_high_value_count offset 1d
+          ) < 0.9
+        for: 1h
+        labels:
+          severity: info
+          team: product
+        annotations:
+          summary: "高价值用户数下降"
+          description: "高价值用户数较昨天下降超过10%"
+
+      # 业务指标：画像计算延迟
+      - alert: ProfileCalculationDelay
+        expr: |
+          rate(profiles_calculated_total[5m]) < 1
+        for: 30m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "画像计算延迟"
+          description: "画像计算速率异常低，可能存在延迟"

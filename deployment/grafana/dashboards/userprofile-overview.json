@@ -1,0 +1,224 @@
+{
+  "dashboard": {
+    "title": "User Profile System - 用户画像系统总览",
+    "tags": ["userprofile", "microservices"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "服务状态",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=~\"user-service|profile-service|tag-service|gateway-service\"}",
+            "legendFormat": "{{job}}"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 1, "color": "green"}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "value": 1, "text": "UP"},
+              {"type": "value", "value": 0, "text": "DOWN"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "请求速率 (QPS)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count{job=~\".*-service\"}[1m])) by (job)",
+            "legendFormat": "{{job}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "响应时间 P95",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{job=~\".*-service\"}[1m])) by (job, le))",
+            "legendFormat": "{{job}} P95"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Time"}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "JVM内存使用",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{job=~\".*-service\", area=\"heap\"}",
+            "legendFormat": "{{job}} - Heap Used"
+          },
+          {
+            "expr": "jvm_memory_max_bytes{job=~\".*-service\", area=\"heap\"}",
+            "legendFormat": "{{job}} - Heap Max"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "Memory"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "HTTP错误率",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "targets": [
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[1m])) by (job) / sum(rate(http_server_requests_seconds_count[1m])) by (job)",
+            "legendFormat": "{{job}} - Error Rate"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "Error Rate"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "数据库连接池",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "targets": [
+          {
+            "expr": "hikaricp_connections_active{job=~\".*-service\"}",
+            "legendFormat": "{{job}} - Active"
+          },
+          {
+            "expr": "hikaricp_connections_idle{job=~\".*-service\"}",
+            "legendFormat": "{{job}} - Idle"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Connections"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Redis缓存命中率",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+        "targets": [
+          {
+            "expr": "sum(rate(cache_requests_total{result=\"hit\"}[1m])) by (cache) / sum(rate(cache_requests_total[1m])) by (cache)",
+            "legendFormat": "{{cache}} - Hit Rate"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "Hit Rate"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "GC时间占比",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+        "targets": [
+          {
+            "expr": "rate(jvm_gc_pause_seconds_sum{job=~\".*-service\"}[1m]) / rate(jvm_gc_pause_seconds_count{job=~\".*-service\"}[1m])",
+            "legendFormat": "{{job}} - {{action}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "GC Time"}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "业务指标 - 用户创建",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+        "targets": [
+          {
+            "expr": "rate(users_created_total[5m])",
+            "legendFormat": "Users Created/sec"
+          },
+          {
+            "expr": "rate(profiles_calculated_total[5m])",
+            "legendFormat": "Profiles Calculated/sec"
+          },
+          {
+            "expr": "rate(tags_created_total[5m])",
+            "legendFormat": "Tags Created/sec"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Operations/sec"}
+        ]
+      },
+      {
+        "id": 10,
+        "title": "定时任务执行",
+        "type": "table",
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 36},
+        "targets": [
+          {
+            "expr": "scheduled_tasks_total",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {"Time": true, "__name__": true},
+              "indexByName": {},
+              "renameByName": {
+                "taskName": "任务名称",
+                "status": "状态",
+                "Value": "执行次数"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "job",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(up, job)",
+          "multi": true,
+          "includeAll": true
+        }
+      ]
+    },
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "10s"
+  }
+}

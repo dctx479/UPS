@@ -1,0 +1,76 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: profile-service
+
+  # Consul配置 (P0-3修复)
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        enabled: ${CONSUL_DISCOVERY_ENABLED:true}
+        instanceId: ${spring.application.name}:${server.port}:${random.value}
+        service-name: ${spring.application.name}
+        health-check-path: /actuator/health
+        health-check-interval: 10s
+        prefer-ip-address: true
+        ip-address: ${SPRING_CLOUD_CLIENT_IP_ADDRESS:127.0.0.1}
+        port: ${server.port}
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/userprofile
+      # 或使用认证方式
+      # uri: mongodb://admin:admin123@localhost:27017/userprofile?authSource=admin
+
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 1
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+# Swagger/OpenAPI配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+# Actuator & Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.userprofile: DEBUG
+    org.springframework.data.mongodb: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"

@@ -1,0 +1,59 @@
+# 测试环境配置
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service-test
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 15  # 使用独立的测试数据库
+
+  # 禁用Consul(测试环境)
+  cloud:
+    consul:
+      discovery:
+        enabled: false
+
+  # 禁用邮件(测试环境)
+  mail:
+    host: localhost
+    port: 25
+
+app:
+  mail:
+    enabled: false
+
+# JWT配置
+jwt:
+  secret: test-secret-key-for-integration-testing-only
+  expiration: 3600000
+
+# 日志配置
+logging:
+  level:
+    root: WARN
+    com.userprofile: INFO
+    org.springframework.test: INFO

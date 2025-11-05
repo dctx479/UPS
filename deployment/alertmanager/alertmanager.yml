@@ -1,0 +1,94 @@
+global:
+  resolve_timeout: 5m
+  # 邮件配置
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alertmanager@example.com'
+  smtp_auth_username: 'alertmanager@example.com'
+  smtp_auth_password: 'your-password'
+
+# 路由配置
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+  routes:
+    # 关键告警发送到 Slack 和邮件
+    - match:
+        severity: critical
+      receiver: 'critical'
+      continue: true
+
+    # 警告级别发送到 Slack
+    - match:
+        severity: warning
+      receiver: 'warning'
+
+    # 信息级别仅记录
+    - match:
+        severity: info
+      receiver: 'info'
+
+# 接收器配置
+receivers:
+  # 默认接收器
+  - name: 'default'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+
+  # 关键告警
+  - name: 'critical'
+    email_configs:
+      - to: 'ops-team@example.com'
+        headers:
+          Subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts-critical'
+        title: '🔴 [CRITICAL] {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Service:* {{ .Labels.service }}
+          {{ end }}
+
+  # 警告告警
+  - name: 'warning'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts-warning'
+        title: '🟡 [WARNING] {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+
+  # 信息告警
+  - name: 'info'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts-info'
+        title: 'ℹ️ [INFO] {{ .GroupLabels.alertname }}'
+        text: '{{ .Annotations.summary }}'
+
+# 抑制规则
+inhibit_rules:
+  # 服务down时抑制其他告警
+  - source_match:
+      severity: 'critical'
+      alertname: 'ServiceDown'
+    target_match:
+      severity: 'warning'
+    equal: ['service']
+
+  # 内存告警时抑制GC告警
+  - source_match:
+      severity: 'critical'
+      alertname: 'HighMemoryUsage'
+    target_match:
+      alertname: 'HighGCTime'
+    equal: ['service']

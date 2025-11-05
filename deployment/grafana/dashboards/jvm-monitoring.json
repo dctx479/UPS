@@ -1,0 +1,179 @@
+{
+  "dashboard": {
+    "title": "JVM Monitoring - JVM监控详情",
+    "tags": ["jvm", "java"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "堆内存使用趋势",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{job=\"$job\", area=\"heap\"}",
+            "legendFormat": "Used"
+          },
+          {
+            "expr": "jvm_memory_committed_bytes{job=\"$job\", area=\"heap\"}",
+            "legendFormat": "Committed"
+          },
+          {
+            "expr": "jvm_memory_max_bytes{job=\"$job\", area=\"heap\"}",
+            "legendFormat": "Max"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes"}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [0.8], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "name": "堆内存使用超过80%"
+        }
+      },
+      {
+        "id": 2,
+        "title": "非堆内存使用",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{job=\"$job\", area=\"nonheap\"}",
+            "legendFormat": "{{id}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "线程数",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "jvm_threads_live_threads{job=\"$job\"}",
+            "legendFormat": "Live"
+          },
+          {
+            "expr": "jvm_threads_daemon_threads{job=\"$job\"}",
+            "legendFormat": "Daemon"
+          },
+          {
+            "expr": "jvm_threads_peak_threads{job=\"$job\"}",
+            "legendFormat": "Peak"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "GC次数",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(jvm_gc_pause_seconds_count{job=\"$job\"}[1m])",
+            "legendFormat": "{{action}} {{cause}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "GC耗时",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(jvm_gc_pause_seconds_sum{job=\"$job\"}[1m])",
+            "legendFormat": "{{action}}"
+          }
+        ],
+        "yaxes": [
+          {"format": "s"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "类加载",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "jvm_classes_loaded_classes{job=\"$job\"}",
+            "legendFormat": "Loaded"
+          },
+          {
+            "expr": "jvm_classes_unloaded_classes_total{job=\"$job\"}",
+            "legendFormat": "Unloaded"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "CPU使用率",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "system_cpu_usage{job=\"$job\"}",
+            "legendFormat": "System"
+          },
+          {
+            "expr": "process_cpu_usage{job=\"$job\"}",
+            "legendFormat": "Process"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "max": 1}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "文件描述符",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "process_files_open_files{job=\"$job\"}",
+            "legendFormat": "Open"
+          },
+          {
+            "expr": "process_files_max_files{job=\"$job\"}",
+            "legendFormat": "Max"
+          }
+        ]
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "job",
+          "type": "query",
+          "datasource": "Prometheus",
+          "query": "label_values(jvm_memory_used_bytes, job)",
+          "current": {
+            "text": "user-service",
+            "value": "user-service"
+          }
+        }
+      ]
+    },
+    "time": {
+      "from": "now-30m",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}

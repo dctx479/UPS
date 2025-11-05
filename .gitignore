@@ -1,0 +1,48 @@
+# 编译输出
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.claude/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+logs/
+*.log
+
+# 环境配置
+.env
+.env.local
+
+# 数据库
+*.db
+*.sqlite
+
+# Docker
+docker-compose.override.yml
+
+# Flutter
+flutter-app/.dart_tool/
+flutter-app/build/
+flutter-app/.flutter-plugins
+flutter-app/.flutter-plugins-dependencies
+flutter-app/.packages
+flutter-app/pubspec.lock
+
+# Node
+node_modules/
+
+# 备份文件
+*.bak
+*.tmp

@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # Zipkin分布式追踪
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+      - JAVA_OPTS=-Xms512m -Xmx512m
+    networks:
+      - tracing
+    restart: unless-stopped
+
+  # Zipkin with Elasticsearch Storage (可选)
+  # elasticsearch-zipkin:
+  #   image: elasticsearch:8.11.0
+  #   container_name: elasticsearch-zipkin
+  #   environment:
+  #     - discovery.type=single-node
+  #     - xpack.security.enabled=false
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #   ports:
+  #     - "9201:9200"
+  #   volumes:
+  #     - es-zipkin-data:/usr/share/elasticsearch/data
+  #   networks:
+  #     - tracing
+
+  # zipkin-persistent:
+  #   image: openzipkin/zipkin:latest
+  #   container_name: zipkin-persistent
+  #   ports:
+  #     - "9411:9411"
+  #   environment:
+  #     - STORAGE_TYPE=elasticsearch
+  #     - ES_HOSTS=elasticsearch-zipkin:9200
+  #     - JAVA_OPTS=-Xms512m -Xmx512m
+  #   depends_on:
+  #     - elasticsearch-zipkin
+  #   networks:
+  #     - tracing
+
+# volumes:
+#   es-zipkin-data:
+
+networks:
+  tracing:
+    driver: bridge

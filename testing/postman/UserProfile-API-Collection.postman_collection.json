@@ -1,0 +1,1267 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "User Profile System API",
+		"description": "用户画像系统完整API测试集合\n\n## 使用说明\n\n1. 导入Collection到Postman\n2. 配置Environment变量\n3. 运行\"1.1 User Login\"获取Token(自动保存)\n4. 其他接口将自动使用Token\n\n## Environment变量\n\n- `base_url`: API基础URL (默认: http://localhost:8080)\n- `access_token`: JWT访问令牌(自动设置)\n- `refresh_token`: 刷新令牌(自动设置)\n- `test_user_id`: 测试用户ID(自动设置)\n- `test_tag_id`: 测试标签ID(自动设置)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12345678"
+	},
+	"item": [
+		{
+			"name": "1. Authentication (认证)",
+			"item": [
+				{
+					"name": "1.1 User Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// 验证响应状态",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// 验证响应结构",
+									"pm.test(\"Response has correct structure\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.have.property('token');",
+									"    pm.expect(jsonData.data).to.have.property('refreshToken');",
+									"});",
+									"",
+									"// 保存Token到环境变量",
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.environment.set(\"access_token\", jsonData.data.token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.data.refreshToken);",
+									"    console.log(\"✅ Access token saved:\", jsonData.data.token.substring(0, 20) + \"...\");",
+									"}",
+									"",
+									"// 验证Token格式(JWT)",
+									"pm.test(\"Token is valid JWT format\", function () {",
+									"    var token = jsonData.data.token;",
+									"    var parts = token.split('.');",
+									"    pm.expect(parts.length).to.equal(3);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "用户登录,获取JWT访问令牌和刷新令牌\n\n**测试账号**:\n- 用户名: admin\n- 密码: admin123\n\n**响应示例**:\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"token\": \"eyJhbGci...\",\n    \"refreshToken\": \"eyJhbGci...\"\n  }\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "1.2 Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// 更新Token",
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.environment.set(\"access_token\", jsonData.data.token);",
+									"    pm.environment.set(\"refresh_token\", jsonData.data.refreshToken);",
+									"    console.log(\"✅ Token refreshed successfully\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refreshToken\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "使用刷新令牌获取新的访问令牌\n\n**有效期**:\n- Access Token: 24小时\n- Refresh Token: 7天"
+					},
+					"response": []
+				},
+				{
+					"name": "1.3 Validate Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Token is valid\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data.valid).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"{{access_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/validate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"validate"
+							]
+						},
+						"description": "验证JWT Token是否有效"
+					},
+					"response": []
+				}
+			],
+			"description": "认证相关API,包括登录、刷新Token、验证Token"
+		},
+		{
+			"name": "2. User Management (用户管理)",
+			"item": [
+				{
+					"name": "2.1 Create User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User created successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data.username).to.equal(\"testuser_\" + Date.now());",
+									"    ",
+									"    // 保存用户ID供后续测试使用",
+									"    pm.environment.set(\"test_user_id\", jsonData.data.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// 生成唯一用户名",
+									"pm.variables.set(\"timestamp\", Date.now());",
+									"pm.variables.set(\"random_email\", \"test\" + Date.now() + \"@example.com\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser_{{timestamp}}\",\n    \"password\": \"Test@123456\",\n    \"name\": \"测试用户\",\n    \"email\": \"{{random_email}}\",\n    \"phone\": \"13800138000\",\n    \"age\": 25,\n    \"gender\": \"M\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						},
+						"description": "创建新用户\n\n**必填字段**:\n- username: 用户名(唯一)\n- password: 密码(6-50字符)\n- name: 姓名\n- email: 邮箱\n\n**可选字段**:\n- phone: 手机号\n- age: 年龄\n- gender: 性别(M/F)"
+					},
+					"response": []
+				},
+				{
+					"name": "2.2 Get User by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User data is complete\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('username');",
+									"    pm.expect(jsonData.data).to.have.property('email');",
+									"    pm.expect(jsonData.data).to.not.have.property('password'); // 密码不应返回",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/{{test_user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{test_user_id}}"
+							]
+						},
+						"description": "根据用户ID查询用户信息"
+					},
+					"response": []
+				},
+				{
+					"name": "2.3 Update User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User updated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data.name).to.equal(\"更新后的用户\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"更新后的用户\",\n    \"email\": \"updated@example.com\",\n    \"phone\": \"13900139000\",\n    \"age\": 30\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/users/{{test_user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{test_user_id}}"
+							]
+						},
+						"description": "更新用户信息\n\n**注意**: username不可修改"
+					},
+					"response": []
+				},
+				{
+					"name": "2.4 Get All Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns user list\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"    pm.expect(jsonData.data.length).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						},
+						"description": "获取所有用户列表"
+					},
+					"response": []
+				},
+				{
+					"name": "2.5 Get User by Username",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User found\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.username).to.equal(\"admin\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/username/admin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"username",
+								"admin"
+							]
+						},
+						"description": "根据用户名查询用户"
+					},
+					"response": []
+				},
+				{
+					"name": "2.6 Delete User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User deleted successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/{{test_user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{test_user_id}}"
+							]
+						},
+						"description": "删除用户\n\n**注意**: 这是逻辑删除,用户状态变为禁用"
+					},
+					"response": []
+				}
+			],
+			"description": "用户管理API,包括CRUD操作"
+		},
+		{
+			"name": "3. User Profile (用户画像)",
+			"item": [
+				{
+					"name": "3.1 Get User Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Profile data is complete\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('userId');",
+									"    pm.expect(jsonData.data).to.have.property('consumptionLevel');",
+									"    pm.expect(jsonData.data).to.have.property('interestTags');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/profiles/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"profiles",
+								"1"
+							]
+						},
+						"description": "获取用户画像详情\n\n**包含信息**:\n- 基础信息: userId, createTime, updateTime\n- 消费属性: consumptionLevel, avgOrderAmount, purchaseFrequency\n- 兴趣偏好: interestTags, categoryPreferences\n- 活跃度: activityLevel, lastActiveTime, activeDays\n- 价值评估: lifetimeValue, churnRisk, profileQuality"
+					},
+					"response": []
+				},
+				{
+					"name": "3.2 Calculate User Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Profile calculated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data).to.have.property('consumptionLevel');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/profiles/1/calculate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"profiles",
+								"1",
+								"calculate"
+							]
+						},
+						"description": "触发用户画像计算\n\n**计算内容**:\n- 消费水平分析\n- 兴趣偏好提取\n- 活跃度评估\n- 流失风险预测\n\n**注意**: 这是异步操作,可能需要几秒时间"
+					},
+					"response": []
+				},
+				{
+					"name": "3.3 Get All Profiles",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns profile list\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/profiles",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"profiles"
+							]
+						},
+						"description": "获取所有用户画像列表"
+					},
+					"response": []
+				}
+			],
+			"description": "用户画像相关API"
+		},
+		{
+			"name": "4. Recommendations (推荐)",
+			"item": [
+				{
+					"name": "4.1 Get Recommendations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns recommendation list\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"    if (jsonData.data.length > 0) {",
+									"        pm.expect(jsonData.data[0]).to.have.property('itemId');",
+									"        pm.expect(jsonData.data[0]).to.have.property('score');",
+									"        pm.expect(jsonData.data[0]).to.have.property('reason');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/profiles/1/recommendations?limit=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"profiles",
+								"1",
+								"recommendations"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "返回数量,默认10"
+								}
+							]
+						},
+						"description": "获取用户个性化推荐\n\n**推荐策略**:\n- 基于兴趣标签的协同过滤\n- 基于消费水平的商品匹配\n- 基于历史行为的序列推荐"
+					},
+					"response": []
+				}
+			],
+			"description": "推荐相关API"
+		},
+		{
+			"name": "5. User Segments (用户分群)",
+			"item": [
+				{
+					"name": "5.1 Get User Segments",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns segment list\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/profiles/1/segments",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"profiles",
+								"1",
+								"segments"
+							]
+						},
+						"description": "获取用户所属分群\n\n**常见分群**:\n- 高价值用户\n- 活跃用户\n- 流失风险用户\n- 新用户"
+					},
+					"response": []
+				}
+			],
+			"description": "用户分群相关API"
+		},
+		{
+			"name": "6. Tags (标签管理)",
+			"item": [
+				{
+					"name": "6.1 Create Tag",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Tag created successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    ",
+									"    // 保存标签ID",
+									"    pm.environment.set(\"test_tag_id\", jsonData.data.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.variables.set(\"timestamp\", Date.now());"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"测试标签_{{timestamp}}\",\n    \"category\": \"测试分类\",\n    \"description\": \"这是一个测试标签\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tags",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tags"
+							]
+						},
+						"description": "创建新标签\n\n**字段说明**:\n- name: 标签名称(唯一)\n- category: 标签分类\n- description: 标签描述"
+					},
+					"response": []
+				},
+				{
+					"name": "6.2 Get Tag by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Tag data is complete\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('id');",
+									"    pm.expect(jsonData.data).to.have.property('name');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/tags/{{test_tag_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tags",
+								"{{test_tag_id}}"
+							]
+						},
+						"description": "根据标签ID查询标签信息"
+					},
+					"response": []
+				},
+				{
+					"name": "6.3 Get All Tags",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns tag list\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/tags",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tags"
+							]
+						},
+						"description": "获取所有标签列表"
+					},
+					"response": []
+				},
+				{
+					"name": "6.4 Get Tags by Category",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns filtered tags\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/tags/category/兴趣爱好",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tags",
+								"category",
+								"兴趣爱好"
+							]
+						},
+						"description": "根据分类获取标签列表"
+					},
+					"response": []
+				},
+				{
+					"name": "6.5 Update Tag",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Tag updated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"更新后的标签\",\n    \"category\": \"新分类\",\n    \"description\": \"更新后的描述\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tags/{{test_tag_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tags",
+								"{{test_tag_id}}"
+							]
+						},
+						"description": "更新标签信息"
+					},
+					"response": []
+				},
+				{
+					"name": "6.6 Delete Tag",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Tag deleted successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/tags/{{test_tag_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tags",
+								"{{test_tag_id}}"
+							]
+						},
+						"description": "删除标签"
+					},
+					"response": []
+				}
+			],
+			"description": "标签管理API"
+		},
+		{
+			"name": "7. Health Checks (健康检查)",
+			"item": [
+				{
+					"name": "7.1 Gateway Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/actuator/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						},
+						"description": "检查Gateway服务健康状态"
+					},
+					"response": []
+				},
+				{
+					"name": "7.2 User Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/actuator/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"actuator",
+								"health"
+							]
+						},
+						"description": "检查User Service健康状态"
+					},
+					"response": []
+				},
+				{
+					"name": "7.3 Profile Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/profiles/actuator/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"profiles",
+								"actuator",
+								"health"
+							]
+						},
+						"description": "检查Profile Service健康状态"
+					},
+					"response": []
+				},
+				{
+					"name": "7.4 Tag Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/tags/actuator/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"tags",
+								"actuator",
+								"health"
+							]
+						},
+						"description": "检查Tag Service健康状态"
+					},
+					"response": []
+				}
+			],
+			"description": "系统健康检查API"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection级别的前置脚本",
+					"// 自动添加认证Token到请求头",
+					"const token = pm.environment.get('access_token');",
+					"if (token) {",
+					"    pm.request.headers.add({",
+					"        key: 'Authorization',",
+					"        value: 'Bearer ' + token",
+					"    });",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Collection级别的测试脚本",
+					"// 检查通用错误",
+					"if (pm.response.code >= 400) {",
+					"    console.error('❌ Request failed:', pm.response.code, pm.response.status);",
+					"    console.error('Response:', pm.response.json());",
+					"}",
+					"",
+					"// 自动重试机制(Token过期时)",
+					"if (pm.response.code === 401) {",
+					"    console.log('⚠️ Token expired, please run \"1.1 User Login\" again');",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "test_user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "test_tag_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

@@ -71,11 +71,23 @@ docker-compose ps
 - [故障排查](./docs/TROUBLESHOOTING.md) - 常见问题解决
 
 ### 云服务商部署指南
+
+#### 📍 完整索引
+- [云服务器部署完整指南索引](./docs/CLOUD_DEPLOYMENT_INDEX.md) - **推荐从这里开始**
+
+#### 国内云服务商
+- [腾讯云轻量应用服务器](./docs/TENCENT_CLOUD_GUIDE.md) - 腾讯云Lighthouse专属指南
+- [阿里云ECS](./docs/ALIYUN_GUIDE.md) - 阿里云弹性计算服务专属指南
+- [华为云ECS](./docs/HUAWEI_CLOUD_GUIDE.md) - 华为云弹性云服务器专属指南
+
+#### 国际云服务商
+- [AWS EC2](./docs/AWS_GUIDE.md) - Amazon Web Services EC2专属指南
+- [Azure虚拟机](./docs/AZURE_GUIDE.md) - Microsoft Azure VM专属指南
+- [Google Cloud Compute Engine](./docs/GCP_GUIDE.md) - Google Cloud Platform专属指南
+
+#### 通用配置
 - [公网访问配置](./docs/PUBLIC_ACCESS_GUIDE.md) - 通用公网访问配置（适用所有云服务商）
 - [快速公网配置](./docs/QUICK_PUBLIC_ACCESS.md) - 一键配置脚本使用指南
-- [腾讯云轻量应用服务器](./docs/TENCENT_CLOUD_GUIDE.md) - 腾讯云专属部署指南
-- [阿里云ECS](./docs/ALIYUN_GUIDE.md) - 阿里云专属部署指南
-- [华为云ECS](./docs/HUAWEI_CLOUD_GUIDE.md) - 华为云专属部署指南
 
 ## 🏗️ 系统架构
 

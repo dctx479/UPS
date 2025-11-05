@@ -2,7 +2,7 @@ package com.userprofile.tag.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.userprofile.tag.dto.TagDTO;
-import com.userprofile.tag.entity.Tag;
+import com.userprofile.tag.entity.UserTag;
 import com.userprofile.tag.repository.TagRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,7 +88,7 @@ class TagServiceIntegrationTest {
         assertThat(createdTagId).isNotNull().isPositive();
 
         // 4. 验证标签已保存
-        Tag savedTag = tagRepository.findById(createdTagId).orElse(null);
+        UserTag savedTag = tagRepository.findById(createdTagId).orElse(null);
         assertThat(savedTag).isNotNull();
         assertThat(savedTag.getTagName()).isEqualTo("高价值用户");
     }
@@ -122,7 +122,7 @@ class TagServiceIntegrationTest {
                 .andExpect(jsonPath("$.data.length()").value(2));
 
         // 3. 验证标签已保存
-        List<Tag> userTags = tagRepository.findByUserId(TEST_USER_ID);
+        List<UserTag> userTags = tagRepository.findByUserId(TEST_USER_ID);
         assertThat(userTags.size()).isGreaterThanOrEqualTo(3); // 包括之前创建的
     }
 
@@ -201,7 +201,7 @@ class TagServiceIntegrationTest {
                 .andExpect(jsonPath("$.data.description").value("超级高价值用户,重点维护"));
 
         // 3. 验证更新已保存
-        Tag updatedTag = tagRepository.findById(createdTagId).orElse(null);
+        UserTag updatedTag = tagRepository.findById(createdTagId).orElse(null);
         assertThat(updatedTag).isNotNull();
         assertThat(updatedTag.getWeight()).isEqualTo(95.0);
     }
@@ -217,7 +217,7 @@ class TagServiceIntegrationTest {
                 .andExpect(jsonPath("$.data.weight").value(100.0)); // 95 + 5 = 100
 
         // 验证权重已调整
-        Tag adjustedTag = tagRepository.findById(createdTagId).orElse(null);
+        UserTag adjustedTag = tagRepository.findById(createdTagId).orElse(null);
         assertThat(adjustedTag).isNotNull();
         assertThat(adjustedTag.getWeight()).isEqualTo(100.0);
     }
@@ -243,7 +243,7 @@ class TagServiceIntegrationTest {
                 .andExpect(jsonPath("$.code").value(200));
 
         // 3. 验证重复标签���删除
-        List<Tag> userTags = tagRepository.findByUserId(TEST_USER_ID);
+        List<UserTag> userTags = tagRepository.findByUserId(TEST_USER_ID);
         long duplicateCount = userTags.stream()
                 .filter(tag -> "高价值用户".equals(tag.getTagName()))
                 .count();
@@ -282,7 +282,7 @@ class TagServiceIntegrationTest {
                 .andExpect(jsonPath("$.code").value(200));
 
         // 验证所有标签已删除
-        List<Tag> userTags = tagRepository.findByUserId(TEST_USER_ID);
+        List<UserTag> userTags = tagRepository.findByUserId(TEST_USER_ID);
         assertThat(userTags).isEmpty();
     }
 }

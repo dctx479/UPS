@@ -61,14 +61,21 @@ docker-compose ps
 
 ## 📖 文档
 
+### 核心文档
 - [快速开始](./docs/QUICKSTART.md) - 5分钟快速部署指南
 - [系统架构](./docs/ARCHITECTURE.md) - 技术架构和设计说明
 - [API文档](./docs/API.md) - RESTful API接口文档
 - [部署指南](./docs/DEPLOYMENT.md) - 生产环境部署
-- [公网访问配置](./docs/PUBLIC_ACCESS_GUIDE.md) - 服务器公网访问配置
 - [安全配置](./SECURITY.md) - 安全配置指南和最佳实践
 - [用户使用指南](./docs/USER_GUIDE.md) - 系统使用说明
 - [故障排查](./docs/TROUBLESHOOTING.md) - 常见问题解决
+
+### 云服务商部署指南
+- [公网访问配置](./docs/PUBLIC_ACCESS_GUIDE.md) - 通用公网访问配置（适用所有云服务商）
+- [快速公网配置](./docs/QUICK_PUBLIC_ACCESS.md) - 一键配置脚本使用指南
+- [腾讯云轻量应用服务器](./docs/TENCENT_CLOUD_GUIDE.md) - 腾讯云专属部署指南
+- [阿里云ECS](./docs/ALIYUN_GUIDE.md) - 阿里云专属部署指南
+- [华为云ECS](./docs/HUAWEI_CLOUD_GUIDE.md) - 华为云专属部署指南
 
 ## 🏗️ 系统架构
 

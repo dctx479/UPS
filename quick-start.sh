@@ -2,13 +2,13 @@
 
 # ====================================
 # Quick Start Script
-# Deploy User Profile System in 5 minutes
+# Deploy User Profiling System in 5 minutes
 # ====================================
 
 set -e
 
 echo "=========================================="
-echo "  User Profile System - Quick Start"
+echo "  User Profiling System - Quick Start"
 echo "=========================================="
 echo ""
 

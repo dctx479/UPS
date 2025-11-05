@@ -1,41 +1,39 @@
-# Multi-stage build for Behavior Service
-FROM maven:3.9-eclipse-temurin-17-alpine AS builder
+# 多阶段构建
+FROM maven:3.9-eclipse-temurin-17-alpine AS build
 
-WORKDIR /build
+WORKDIR /workspace
 
-# Copy parent pom if exists
-COPY ../../pom.xml ./pom.xml 2>/dev/null || true
+# 先复制并构建common模块
+COPY common/pom.xml common/pom.xml
+COPY common/src common/src
+RUN cd common && mvn clean install -DskipTests
 
-# Copy service pom and source
-COPY pom.xml .
-COPY src ./src
+# 复制当前服务的pom.xml并下载依赖
+COPY behavior-service/pom.xml behavior-service/pom.xml
+RUN cd behavior-service && mvn dependency:go-offline -B
 
-# Build the application (skip tests for faster builds)
-RUN mvn clean package -DskipTests
+# 复制源代码并构建
+COPY behavior-service/src behavior-service/src
+RUN cd behavior-service && mvn clean package -DskipTests
 
-# Runtime stage
+# 运行阶段
 FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# Add application user for security
+# 添加非root用户
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-# Copy built jar from builder stage
-COPY --from=builder /build/target/*.jar app.jar
+# 从构建阶段复制jar包
+COPY --from=build /workspace/behavior-service/target/*.jar app.jar
 
-# Expose service port
+# 暴露端口
 EXPOSE 8083
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8083/actuator/health || exit 1
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:8083/actuator/health || exit 1
 
-# Run the application
-ENTRYPOINT ["java", \
-  "-XX:+UseContainerSupport", \
-  "-XX:MaxRAMPercentage=75.0", \
-  "-Djava.security.egd=file:/dev/./urandom", \
-  "-jar", \
-  "app.jar"]
+# 启动应用
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

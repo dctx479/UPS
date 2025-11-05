@@ -1,4 +1,4 @@
-# User Profile System (UPS) v1.0
+# User Profiling System (UPS) v1.0
 
 一个基于Spring Boot微服务架构的企业级用户画像系统。
 

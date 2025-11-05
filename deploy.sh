@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # ====================================
-# User Profile System - Deployment Script
+# User Profiling System - Deployment Script
 # ====================================
 
 set -e
 
 echo "===================================="
-echo "User Profile System Deployment"
+echo "User Profiling System Deployment"
 echo "===================================="
 echo ""
 

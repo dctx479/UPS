@@ -46,3 +46,13 @@ node_modules/
 # 备份文件
 *.bak
 *.tmp
+
+# CRITICAL: Never commit these
+**/*claude*
+**/*Claude*
+**/*CLAUDE*
+**/*anthropic*
+**/*Anthropic*
+**/*ANTHROPIC*
+.claude/
+.anthropic/

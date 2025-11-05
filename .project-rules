@@ -1,0 +1,46 @@
+# Project Commit Rules (IMMUTABLE)
+
+## Absolute Requirements
+
+### 1. NO Claude/Anthropic Content
+**CRITICAL**: The following content is STRICTLY PROHIBITED in:
+- All code files (.java, .dart, .yml, .yaml, .xml, etc.)
+- All documentation (.md, .txt, etc.)
+- All commit messages
+- All comments and annotations
+- All configuration files
+- Any project files
+
+**Prohibited Terms** (case-insensitive):
+- Claude
+- Anthropic
+- AI Assistant
+- Generated with Claude
+- Co-Authored-By: Claude
+
+### 2. Violation Detection
+Before ANY commit:
+```bash
+# Must run this check
+grep -ri "claude\|anthropic" --include="*.java" --include="*.md" --include="*.yml" --include="*.dart" .
+# If ANY results found: STOP and remove them
+```
+
+### 3. Commit Message Rules
+- MUST NOT contain "Claude" or "Anthropic"
+- MUST NOT contain AI generation references
+- MUST be professional and clean
+- Focus on WHAT changed, not HOW it was created
+
+### 4. Git Configuration
+The following are permanently configured:
+- User: dctx479
+- Email: b150w4942@163.com
+- Repository: https://github.com/dctx479/UPS.git
+
+## This File is IMMUTABLE
+This configuration CANNOT be changed or ignored.
+Any violation will corrupt the project integrity.
+
+**Last Updated**: 2025-01-05
+**Status**: ENFORCED

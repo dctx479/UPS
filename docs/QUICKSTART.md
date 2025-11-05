@@ -6,18 +6,59 @@
 - Docker Compose 2.0+
 - 4GB+ 可用内存
 
-## 一键启动
+## 方式一：自动部署（推荐）
 
 ```bash
-# 1. 进入项目目录
-cd 构建用户画像
+# 克隆项目
+git clone https://github.com/dctx479/UPS.git
+cd UPS
 
-# 2. 启动所有服务
+# 运行快速启动脚本
+chmod +x quick-start.sh
+./quick-start.sh
+```
+
+脚本会自动完成：
+1. 环境检查
+2. 配置初始化
+3. 镜像拉取和构建
+4. 服务启动
+5. 健康检查
+
+## 方式二：手动部署
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/dctx479/UPS.git
+cd UPS
+
+# 2. 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件,修改数据库密码等配置
+
+# 3. 启动所有服务
 docker-compose up -d
 
-# 3. 查看服务状态
+# 4. 查看服务状态
 docker-compose ps
 ```
+
+## 方式三：交互式部署
+
+```bash
+# 使用交互式部署脚本
+chmod +x deploy.sh
+./deploy.sh
+```
+
+部署脚本提供以下选项:
+1. 部署所有服务
+2. 仅部署基础设施
+3. 仅部署微服务
+4. 停止所有服务
+5. 查看日志
+6. 检查服务状态
+7. 清理容器和数据卷
 
 ## 服务端口
 
@@ -26,9 +67,9 @@ docker-compose ps
 | Gateway | 8080 | API网关 |
 | User Service | 8081 | 用户服务 |
 | Profile Service | 8082 | 画像服务 |
-| Tag Service | 8083 | 标签服务 |
+| Behavior Service | 8083 | 行为服务 |
 | Consul | 8500 | 服务注册中心 |
-| PostgreSQL | 5432 | 用户数据库 |
+| MySQL | 3306 | 用户数据库 |
 | MongoDB | 27017 | 画像数据库 |
 | Redis | 6379 | 缓存 |
 

@@ -10,6 +10,9 @@ echo ""
 
 FOUND_ISSUES=0
 
+# Exception files (policy definition files)
+EXCEPTION_PATTERN="\.project-rules|verify-content\.sh|COMPLIANCE\.md"
+
 # Check all source files
 echo "[1/4] Checking Java files..."
 JAVA_FILES=$(find backend -name "*.java" -exec grep -l "claude\|Claude\|CLAUDE\|anthropic\|Anthropic\|ANTHROPIC" {} \; 2>/dev/null || true)
@@ -23,7 +26,7 @@ fi
 
 echo ""
 echo "[2/4] Checking documentation files..."
-DOC_FILES=$(find . -name "*.md" -exec grep -l "claude\|Claude\|CLAUDE\|anthropic\|Anthropic\|ANTHROPIC" {} \; 2>/dev/null | grep -v ".git" || true)
+DOC_FILES=$(find . -name "*.md" -not -name "COMPLIANCE.md" -exec grep -l "claude\|Claude\|CLAUDE\|anthropic\|Anthropic\|ANTHROPIC" {} \; 2>/dev/null | grep -v ".git" || true)
 if [ ! -z "$DOC_FILES" ]; then
     echo "❌ Found prohibited content in documentation:"
     echo "$DOC_FILES"

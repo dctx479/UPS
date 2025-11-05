@@ -8,68 +8,103 @@
 - 8GB+ 内存
 - 20GB+ 磁盘空间
 
-### 部署步骤
+### 快速部署
 
-#### 1. 环境配置
+#### 方式一：自动部署脚本（推荐）
+
 ```bash
-# 创建环境变量文件
+# 1. 克隆项目
+git clone https://github.com/dctx479/UPS.git
+cd UPS
+
+# 2. 运行快速启动脚本
+chmod +x quick-start.sh
+./quick-start.sh
+```
+
+快速启动脚本会自动：
+- 检查环境依赖
+- 生成环境配置文件（.env）
+- 拉取基础镜像
+- 构建微服务镜像
+- 启动所有服务
+- 等待服务就绪
+
+#### 方式二：交互式部署脚本
+
+```bash
+# 使用交互式部署脚本
+chmod +x deploy.sh
+./deploy.sh
+```
+
+交互式脚本提供以下功能：
+1. 部署所有服务（完整堆栈）
+2. 仅部署基础设施（Consul, Redis, MongoDB, MySQL）
+3. 仅部署微服务
+4. 停止所有服务
+5. 查看服务日志
+6. 检查服务状态
+7. 清理容器和数据卷
+
+#### 方式三：手动部署
+
+```bash
+# 1. 环境配置
 cp .env.example .env
+vim .env  # 编辑配置
 
-# 编辑配置（可选）
-vim .env
-```
-
-**.env 配置项**:
-```env
-# 数据库配置
-POSTGRES_PASSWORD=your_strong_password
-MONGO_ROOT_PASSWORD=your_strong_password
-REDIS_PASSWORD=your_strong_password
-
-# JWT密钥（生产环境必须修改）
-JWT_SECRET=your_jwt_secret_key_at_least_32_chars
-
-# 允许的跨域来源
-ALLOWED_ORIGINS=https://yourdomain.com
-```
-
-#### 2. 启动服务
-```bash
-# 构建并启动
+# 2. 启动服务
 docker-compose up -d
 
-# 查看日志
+# 3. 查看日志
 docker-compose logs -f
 
-# 查看服务状态
+# 4. 查看服务状态
 docker-compose ps
 ```
 
-#### 3. 健康检查
+### 环境配置
+
+**.env 配置项**:
+```env
+# MySQL配置
+MYSQL_ROOT_PASSWORD=root123
+MYSQL_USER=userservice
+MYSQL_PASSWORD=userservice123
+
+# MongoDB配置
+MONGO_USERNAME=admin
+MONGO_PASSWORD=admin123
+
+# Redis配置
+REDIS_PASSWORD=redis123
+
+# JWT密钥（生产环境必须修改）
+JWT_SECRET=your_jwt_secret_key_at_least_32_chars
+```
+
+### 健康检查
 ```bash
 # 检查各服务健康状态
-curl http://localhost:8080/actuator/health
-curl http://localhost:8081/actuator/health
-curl http://localhost:8082/actuator/health
-curl http://localhost:8083/actuator/health
+curl http://localhost:8080/actuator/health  # Gateway
+curl http://localhost:8081/actuator/health  # User Service
+curl http://localhost:8082/actuator/health  # Profile Service
+curl http://localhost:8083/actuator/health  # Behavior Service
 
 # 检查Consul服务注册
 curl http://localhost:8500/v1/catalog/services
 ```
 
-#### 4. 初始化数据
-```bash
-# 创建管理员用户
-docker exec -it user-service bash
-curl -X POST http://localhost:8081/api/users \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "admin",
-    "password": "Admin@123456",
-    "name": "系统管理员",
-    "email": "admin@example.com"
-  }'
-```
+### 初始化数据
+
+数据库初始化脚本会自动执行：
+- MySQL: `scripts/mysql-init.sql` - 创建表结构和默认管理员用户
+- MongoDB: `scripts/mongo-init.js` - 创建集合、索引和示例数据
+
+默认管理员账号：
+- 用户名: `admin`
+- 密码: `admin123`
 
 ### 服务管理
 
@@ -194,43 +229,68 @@ kubectl scale deployment user-service --replicas=3 -n user-profile
 
 ## 生产环境优化
 
-### 1. 数据库优化
+### 数据库优化
 
-**PostgreSQL**:
+**MySQL索引** (自动创建于 `scripts/mysql-init.sql`):
 ```sql
--- 创建索引
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_tags_user_id ON tags(user_id);
-CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
+-- 用户表索引
+CREATE INDEX idx_username ON users(username);
+CREATE INDEX idx_email ON users(email);
+CREATE INDEX idx_phone ON users(phone);
+CREATE INDEX idx_status ON users(status);
+CREATE INDEX idx_create_time ON users(create_time);
 ```
 
-**MongoDB**:
+**MongoDB索引** (自动创建于实体类和 `scripts/mongo-init.js`):
 ```javascript
-// 索引会自动创建，也可手动创建
+// user_profiles 索引
 db.user_profiles.createIndex({ userId: 1 }, { unique: true });
 db.user_profiles.createIndex({ username: 1 });
 db.user_profiles.createIndex({ updateTime: -1 });
 db.user_profiles.createIndex({ profileScore: -1 });
+db.user_profiles.createIndex({ userId: 1, updateTime: -1 });
+
+// user_behaviors 索引
+db.user_behaviors.createIndex({ userId: 1 });
+db.user_behaviors.createIndex({ behaviorType: 1 });
+db.user_behaviors.createIndex({ timestamp: -1 });
+db.user_behaviors.createIndex({ userId: 1, timestamp: -1 });
 ```
 
-### 2. JVM参数调优
+### JVM参数调优
 
+Dockerfile中已配置容器化优化参数：
 ```bash
-# user-service
-JAVA_OPTS="-Xms1g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+# 自动使用容器内存限制
+-XX:+UseContainerSupport
+-XX:MaxRAMPercentage=75.0
 
-# profile-service
-JAVA_OPTS="-Xms2g -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+# 优化随机数生成
+-Djava.security.egd=file:/dev/./urandom
 ```
 
-### 3. Redis配置
+生产环境可通过环境变量覆盖：
+```yaml
+# docker-compose.yml
+environment:
+  JAVA_OPTS: "-Xms2g -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+```
 
+### Redis配置
+
+docker-compose.yml 中已配置：
+```yaml
+redis:
+  command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+```
+
+生产环境建议配置：
 ```conf
-# redis.conf
+# 内存限制
 maxmemory 2gb
 maxmemory-policy allkeys-lru
-save ""  # 禁用RDB（使用AOF）
+
+# 持久化策略
 appendonly yes
 appendfsync everysec
 ```
@@ -268,16 +328,31 @@ groups:
 
 ### 数据库备份
 
-**PostgreSQL**:
+**MySQL备份** (使用docker-compose服务名):
 ```bash
-# 每日备份
-0 2 * * * docker exec postgres pg_dump -U postgres userprofile_db > /backup/postgres_$(date +\%Y\%m\%d).sql
+# 手动备份
+docker exec ups-mysql mysqldump -u root -p${MYSQL_ROOT_PASSWORD} userservice > backup_$(date +%Y%m%d).sql
+
+# 定时备份 (crontab)
+0 2 * * * docker exec ups-mysql mysqldump -u root -proot123 userservice > /backup/mysql_$(date +\%Y\%m\%d).sql
 ```
 
-**MongoDB**:
+**MongoDB备份**:
 ```bash
-# 每日备份
-0 2 * * * docker exec mongodb mongodump --db userprofile_db --out /backup/mongo_$(date +\%Y\%m\%d)
+# 手动备份
+docker exec ups-mongodb mongodump --uri="mongodb://admin:admin123@localhost:27017" --db=userprofile --out=/backup/mongo_$(date +%Y%m%d)
+
+# 定时备份 (crontab)
+0 2 * * * docker exec ups-mongodb mongodump --uri="mongodb://admin:admin123@localhost:27017" --db=userprofile --out=/backup/mongo_$(date +\%Y\%m\%d)
+```
+
+**恢复数据**:
+```bash
+# MySQL恢复
+docker exec -i ups-mysql mysql -u root -proot123 userservice < backup_20250105.sql
+
+# MongoDB恢复
+docker exec ups-mongodb mongorestore --uri="mongodb://admin:admin123@localhost:27017" --db=userprofile /backup/mongo_20250105/userprofile
 ```
 
 ### 配置备份
@@ -328,26 +403,23 @@ redis-rate-limiter:
 
 ### 服务重启
 ```bash
-# Docker Compose
+# Docker Compose - 重启单个服务
 docker-compose restart user-service
 
-# Kubernetes
-kubectl rollout restart deployment/user-service -n user-profile
+# Docker Compose - 重启所有服务
+docker-compose restart
+
+# Docker Compose - 重新构建并重启
+docker-compose up -d --build user-service
 ```
 
 ### 数据恢复
 ```bash
-# PostgreSQL
-docker exec -i postgres psql -U postgres userprofile_db < backup.sql
+# MySQL恢复
+docker exec -i ups-mysql mysql -u root -proot123 userservice < backup_20250105.sql
 
-# MongoDB
-docker exec -i mongodb mongorestore --db userprofile_db /backup/mongo_20250105
-```
-
-### 回滚部署
-```bash
-# Kubernetes
-kubectl rollout undo deployment/user-service -n user-profile
+# MongoDB恢复
+docker exec ups-mongodb mongorestore --uri="mongodb://admin:admin123@localhost:27017" --db=userprofile /backup/mongo_20250105/userprofile
 ```
 
 ---

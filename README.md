@@ -23,12 +23,28 @@
 - Docker Compose 2.0+
 - 4GB+ 可用内存
 
-### 一键启动
+### 快速部署（推荐）
 
 ```bash
 # 克隆项目
 git clone https://github.com/dctx479/UPS.git
 cd UPS
+
+# 运行快速启动脚本
+chmod +x quick-start.sh
+./quick-start.sh
+```
+
+### 手动部署
+
+```bash
+# 克隆项目
+git clone https://github.com/dctx479/UPS.git
+cd UPS
+
+# 配置环境变量
+cp .env.example .env
+vim .env  # 根据需要修改配置
 
 # 启动所有服务
 docker-compose up -d
@@ -58,13 +74,13 @@ Flutter Client
       ↓
 API Gateway (8080)
       ↓
-┌─────┴─────┬─────────┬─────────┐
-↓           ↓         ↓         ↓
-User     Profile    Tag      Consul
+┌─────┴─────┬──────────┬──────────┐
+↓           ↓          ↓          ↓
+User     Profile  Behavior    Consul
 Service  Service  Service  (Registry)
-(8081)   (8082)   (8083)    (8500)
-↓           ↓         ↓
-PostgreSQL MongoDB  Redis
+(8081)   (8082)   (8083)     (8500)
+↓           ↓          ↓
+MySQL    MongoDB    Redis
 ```
 
 ## 🛠️ 技术栈
@@ -73,7 +89,7 @@ PostgreSQL MongoDB  Redis
 - **框架**: Spring Boot 3.2, Spring Cloud
 - **安全**: Spring Security, JWT
 - **服务治理**: Consul, OpenFeign, Resilience4j
-- **数据库**: PostgreSQL, MongoDB, Redis
+- **数据库**: MySQL, MongoDB, Redis
 
 ### 前端
 - **UI框架**: Flutter
@@ -90,18 +106,19 @@ PostgreSQL MongoDB  Redis
 ```
 UPS/
 ├── backend/                 # 后端服务
-│   ├── common/             # 公共模块
 │   ├── gateway-service/    # API网关
 │   ├── user-service/       # 用户服务
 │   ├── profile-service/    # 画像服务
+│   ├── behavior-service/   # 行为服务
 │   └── tag-service/        # 标签服务
 ├── flutter-app/            # Flutter前端
-├── deployment/             # 部署配置
-│   ├── k8s/               # Kubernetes配置
-│   ├── prometheus/        # 监控配置
-│   └── grafana/           # 可视化配置
-├── testing/               # 测试脚本
-└── docs/                  # 文档
+├── scripts/                # 数据库初始化脚本
+│   ├── mysql-init.sql     # MySQL初始化
+│   └── mongo-init.js      # MongoDB初始化
+├── docs/                   # 文档
+├── docker-compose.yml      # Docker Compose配置
+├── deploy.sh              # 交互式部署脚本
+└── quick-start.sh         # 快速启动脚本
 ```
 
 ## 🔧 开发
@@ -110,7 +127,7 @@ UPS/
 
 ```bash
 # 启动基础设施
-docker-compose up -d postgres mongodb redis consul
+docker-compose up -d consul redis mongodb mysql
 
 # 启动服务 (需要 Maven 和 Java 17+)
 cd backend/user-service
@@ -119,7 +136,7 @@ mvn spring-boot:run
 cd backend/profile-service
 mvn spring-boot:run
 
-cd backend/tag-service
+cd backend/behavior-service
 mvn spring-boot:run
 
 cd backend/gateway-service
@@ -150,7 +167,13 @@ mvn test -Dtest=*IntegrationTest
 - 自动画像初始化
 - 画像评分计算
 - 用户类型分析
-- 营销策略推荐
+- 价值评估
+
+### 行为分析
+- 用户行为追踪
+- 行为统计分析
+- 活跃度计算
+- 偏好分析
 
 ### 标签管理
 - 灵活的标签系统
@@ -193,7 +216,6 @@ mvn test -Dtest=*IntegrationTest
 ## 📝 版本信息
 
 **当前版本**: v1.0
-**发布日期**: 2025-01-05
 **状态**: ✅ 生产就绪
 
 ## 🤝 贡献

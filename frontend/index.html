@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户画像系统 - User Profiling System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+        }
+
+        .config-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .config-panel h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .status {
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .response-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .response-box pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .user-info p {
+            margin: 5px 0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 用户画像系统</h1>
+            <p>User Profiling System v1.0</p>
+        </div>
+
+        <div class="config-panel">
+            <h3>⚙️ 服务器配置</h3>
+            <div class="form-group">
+                <label>API 服务器地址：</label>
+                <input type="text" id="serverUrl" value="http://localhost:8080" placeholder="http://your-server:8080">
+            </div>
+            <button onclick="testConnection()">测试连接</button>
+            <div id="connectionStatus"></div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('register')">注册</div>
+            <div class="tab" onclick="switchTab('login')">登录</div>
+            <div class="tab" onclick="switchTab('profile')">用户画像</div>
+            <div class="tab" onclick="switchTab('tags')">标签管理</div>
+        </div>
+
+        <!-- 注册标签页 -->
+        <div id="register" class="tab-content active">
+            <h2>用户注册</h2>
+            <div class="form-group">
+                <label>用户名：</label>
+                <input type="text" id="reg-username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>密码：</label>
+                <input type="password" id="reg-password" placeholder="密码需包含大小写字母、数字和特殊字符">
+            </div>
+            <div class="form-group">
+                <label>邮箱：</label>
+                <input type="email" id="reg-email" placeholder="请输入邮箱">
+            </div>
+            <div class="form-group">
+                <label>姓名：</label>
+                <input type="text" id="reg-name" placeholder="请输入姓名">
+            </div>
+            <button onclick="register()">注册</button>
+            <div id="register-response" class="response-box" style="display:none;"></div>
+        </div>
+
+        <!-- 登录标签页 -->
+        <div id="login" class="tab-content">
+            <h2>用户登录</h2>
+            <div class="form-group">
+                <label>用户名：</label>
+                <input type="text" id="login-username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>密码：</label>
+                <input type="password" id="login-password" placeholder="请输入密码">
+            </div>
+            <button onclick="login()">登录</button>
+            <div id="login-response" class="response-box" style="display:none;"></div>
+        </div>
+
+        <!-- 用户画像标签页 -->
+        <div id="profile" class="tab-content">
+            <h2>用户画像</h2>
+            <div id="profile-user-info" class="user-info" style="display:none;"></div>
+            <div class="form-group">
+                <label>用户ID：</label>
+                <input type="text" id="profile-userId" placeholder="请输入用户ID或登录后自动填充">
+            </div>
+            <button onclick="getProfile()">查看画像</button>
+            <div id="profile-response" class="response-box" style="display:none;"></div>
+        </div>
+
+        <!-- 标签管理标签页 -->
+        <div id="tags" class="tab-content">
+            <h2>标签管理</h2>
+            <div id="tags-user-info" class="user-info" style="display:none;"></div>
+
+            <h3>创建标签</h3>
+            <div class="form-group">
+                <label>用户ID：</label>
+                <input type="text" id="tag-userId" placeholder="请输入用户ID或登录后自动填充">
+            </div>
+            <div class="form-group">
+                <label>标签名称：</label>
+                <input type="text" id="tag-name" placeholder="例如：高价值用户">
+            </div>
+            <div class="form-group">
+                <label>标签分类：</label>
+                <input type="text" id="tag-category" placeholder="例如：价值分类">
+            </div>
+            <div class="form-group">
+                <label>权重 (0-1)：</label>
+                <input type="text" id="tag-weight" placeholder="0.8" value="0.8">
+            </div>
+            <div class="btn-group">
+                <button onclick="createTag()">创建标签</button>
+                <button onclick="getUserTags()">查看所有标签</button>
+            </div>
+            <div id="tags-response" class="response-box" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = '';
+        let currentUserId = null;
+
+        function getServerUrl() {
+            return document.getElementById('serverUrl').value.replace(/\/$/, '');
+        }
+
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `status ${type}`;
+            element.innerHTML = message;
+        }
+
+        function showResponse(elementId, data) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        function switchTab(tabName) {
+            // 隐藏所有标签页
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 显示选中的标签页
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // 如果已登录，自动填充用户ID
+            if (currentUserId) {
+                if (tabName === 'profile') {
+                    document.getElementById('profile-userId').value = currentUserId;
+                }
+                if (tabName === 'tags') {
+                    document.getElementById('tag-userId').value = currentUserId;
+                }
+            }
+        }
+
+        async function testConnection() {
+            const url = getServerUrl();
+            try {
+                const response = await fetch(`${url}/actuator/health`);
+                const data = await response.json();
+                showStatus('connectionStatus', '✅ 服务器连接成功！', 'success');
+            } catch (error) {
+                showStatus('connectionStatus', `❌ 连接失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function register() {
+            const url = getServerUrl();
+            const data = {
+                username: document.getElementById('reg-username').value,
+                password: document.getElementById('reg-password').value,
+                email: document.getElementById('reg-email').value,
+                name: document.getElementById('reg-name').value
+            };
+
+            try {
+                const response = await fetch(`${url}/api/users`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                showResponse('register-response', result);
+
+                if (result.code === 200) {
+                    alert('注册成功！请前往登录页面登录。');
+                    switchTab('login');
+                    document.getElementById('login-username').value = data.username;
+                }
+            } catch (error) {
+                showResponse('register-response', { error: error.message });
+            }
+        }
+
+        async function login() {
+            const url = getServerUrl();
+            const data = {
+                username: document.getElementById('login-username').value,
+                password: document.getElementById('login-password').value
+            };
+
+            try {
+                const response = await fetch(`${url}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                showResponse('login-response', result);
+
+                if (result.code === 200 && result.data.accessToken) {
+                    currentToken = result.data.accessToken;
+                    currentUserId = result.data.user.id;
+                    alert('登录成功！');
+                    updateUserInfo();
+                }
+            } catch (error) {
+                showResponse('login-response', { error: error.message });
+            }
+        }
+
+        function updateUserInfo() {
+            const info = `
+                <p><strong>已登录用户：</strong></p>
+                <p>用户ID: ${currentUserId}</p>
+                <p>Token: ${currentToken.substring(0, 30)}...</p>
+            `;
+            document.getElementById('profile-user-info').innerHTML = info;
+            document.getElementById('profile-user-info').style.display = 'block';
+            document.getElementById('tags-user-info').innerHTML = info;
+            document.getElementById('tags-user-info').style.display = 'block';
+        }
+
+        async function getProfile() {
+            const url = getServerUrl();
+            const userId = document.getElementById('profile-userId').value;
+
+            if (!currentToken) {
+                alert('请先登录！');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${url}/api/profiles/user/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const result = await response.json();
+                showResponse('profile-response', result);
+            } catch (error) {
+                showResponse('profile-response', { error: error.message });
+            }
+        }
+
+        async function createTag() {
+            const url = getServerUrl();
+            const data = {
+                userId: parseInt(document.getElementById('tag-userId').value),
+                tagName: document.getElementById('tag-name').value,
+                category: document.getElementById('tag-category').value,
+                source: 'MANUAL',
+                weight: parseFloat(document.getElementById('tag-weight').value)
+            };
+
+            if (!currentToken) {
+                alert('请先登录！');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${url}/api/tags`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                showResponse('tags-response', result);
+
+                if (result.code === 200) {
+                    alert('标签创建成功！');
+                }
+            } catch (error) {
+                showResponse('tags-response', { error: error.message });
+            }
+        }
+
+        async function getUserTags() {
+            const url = getServerUrl();
+            const userId = document.getElementById('tag-userId').value;
+
+            if (!currentToken) {
+                alert('请先登录！');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${url}/api/tags/user/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const result = await response.json();
+                showResponse('tags-response', result);
+            } catch (error) {
+                showResponse('tags-response', { error: error.message });
+            }
+        }
+
+        // 页面加载时自动测试连接
+        window.onload = function() {
+            testConnection();
+        };
+    </script>
+</body>
+</html>

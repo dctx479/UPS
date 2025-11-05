@@ -2,7 +2,7 @@
 
 一个基于Spring Boot微服务架构的企业级用户画像系统。
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 [![Java](https://img.shields.io/badge/Java-17+-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-brightgreen.svg)](https://spring.io/projects/spring-boot)
 
@@ -224,7 +224,20 @@ mvn test -Dtest=*IntegrationTest
 
 ## 📄 许可证
 
-[MIT License](LICENSE)
+本项目采用 **CC BY-NC 4.0** (Creative Commons Attribution-NonCommercial 4.0 International) 许可协议。
+
+**允许**:
+- ✅ 个人学习和研究
+- ✅ 非商业用途的使用和修改
+- ✅ 在署名的前提下分享和传播
+
+**禁止**:
+- ❌ 商业用途（包括但不限于商业产品、付费服务、盈利活动）
+- ❌ 未经授权的商业化部署
+
+如需商业授权,请联系: b150w4942@163.com
+
+详细协议内容请查看 [LICENSE](LICENSE) 文件。
 
 ## 👨‍💻 作者
 

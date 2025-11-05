@@ -65,6 +65,9 @@ docker-compose ps
 - [系统架构](./docs/ARCHITECTURE.md) - 技术架构和设计说明
 - [API文档](./docs/API.md) - RESTful API接口文档
 - [部署指南](./docs/DEPLOYMENT.md) - 生产环境部署
+- [公网访问配置](./docs/PUBLIC_ACCESS_GUIDE.md) - 服务器公网访问配置
+- [安全配置](./SECURITY.md) - 安全配置指南和最佳实践
+- [用户使用指南](./docs/USER_GUIDE.md) - 系统使用说明
 - [故障排查](./docs/TROUBLESHOOTING.md) - 常见问题解决
 
 ## 🏗️ 系统架构

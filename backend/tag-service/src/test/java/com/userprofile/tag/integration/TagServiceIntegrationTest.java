@@ -62,10 +62,9 @@ class TagServiceIntegrationTest {
         TagDTO tagDTO = new TagDTO();
         tagDTO.setUserId(TEST_USER_ID);
         tagDTO.setTagName("高价值用户");
-        tagDTO.setTagCategory("价值分���");
-        tagDTO.setTagValue("HIGH_VALUE");
-        tagDTO.setWeight(90.0);
-        tagDTO.setDescription("消费能力强,忠诚度高");
+        tagDTO.setCategory("价值分类");
+        tagDTO.setSource(UserTag.TagSource.SYSTEM);
+        tagDTO.setWeight(0.90);
 
         // 2. 发送创建请求
         MvcResult result = mockMvc.perform(post("/api/tags")
@@ -75,7 +74,7 @@ class TagServiceIntegrationTest {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.tagName").value("高价值用户"))
-                .andExpect(jsonPath("$.data.weight").value(90.0))
+                .andExpect(jsonPath("$.data.weight").value(0.90))
                 .andReturn();
 
         // 3. 提取创建的标签ID
@@ -101,14 +100,16 @@ class TagServiceIntegrationTest {
         TagDTO tag1 = new TagDTO();
         tag1.setUserId(TEST_USER_ID);
         tag1.setTagName("猫粮爱好者");
-        tag1.setTagCategory("兴趣偏好");
-        tag1.setWeight(80.0);
+        tag1.setCategory("兴趣偏好");
+        tag1.setSource(UserTag.TagSource.ALGORITHM);
+        tag1.setWeight(0.80);
 
         TagDTO tag2 = new TagDTO();
         tag2.setUserId(TEST_USER_ID);
         tag2.setTagName("价格敏感");
-        tag2.setTagCategory("消费行为");
-        tag2.setWeight(70.0);
+        tag2.setCategory("消费行为");
+        tag2.setSource(UserTag.TagSource.EVENT);
+        tag2.setWeight(0.70);
 
         List<TagDTO> tagList = Arrays.asList(tag1, tag2);
 
@@ -188,8 +189,7 @@ class TagServiceIntegrationTest {
     void testUpdateTagFlow() throws Exception {
         // 1. 准备更新数据
         TagDTO updateDTO = new TagDTO();
-        updateDTO.setWeight(95.0);
-        updateDTO.setDescription("超级高价值用户,重点维护");
+        updateDTO.setWeight(0.95);
 
         // 2. 发送更新请求
         mockMvc.perform(put("/api/tags/" + createdTagId)
@@ -197,13 +197,12 @@ class TagServiceIntegrationTest {
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.weight").value(95.0))
-                .andExpect(jsonPath("$.data.description").value("超级高价值用户,重点维护"));
+                .andExpect(jsonPath("$.data.weight").value(0.95));
 
         // 3. 验证更新已保存
         UserTag updatedTag = tagRepository.findById(createdTagId).orElse(null);
         assertThat(updatedTag).isNotNull();
-        assertThat(updatedTag.getWeight()).isEqualTo(95.0);
+        assertThat(updatedTag.getWeight()).isEqualTo(0.95);
     }
 
     @Test
@@ -211,15 +210,15 @@ class TagServiceIntegrationTest {
     @DisplayName("集成测试 9: 调整标签权重")
     void testAdjustTagWeightFlow() throws Exception {
         mockMvc.perform(patch("/api/tags/" + createdTagId + "/weight")
-                        .param("adjustment", "5"))
+                        .param("adjustment", "0.05"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.weight").value(100.0)); // 95 + 5 = 100
+                .andExpect(jsonPath("$.data.weight").value(1.0)); // 0.95 + 0.05 = 1.0
 
         // 验证权重已调整
         UserTag adjustedTag = tagRepository.findById(createdTagId).orElse(null);
         assertThat(adjustedTag).isNotNull();
-        assertThat(adjustedTag.getWeight()).isEqualTo(100.0);
+        assertThat(adjustedTag.getWeight()).isEqualTo(1.0);
     }
 
     @Test
@@ -230,8 +229,9 @@ class TagServiceIntegrationTest {
         TagDTO duplicateTag = new TagDTO();
         duplicateTag.setUserId(TEST_USER_ID);
         duplicateTag.setTagName("高价值用户");
-        duplicateTag.setTagCategory("价值分类");
-        duplicateTag.setWeight(85.0);
+        duplicateTag.setCategory("价值分类");
+        duplicateTag.setSource(UserTag.TagSource.MANUAL);
+        duplicateTag.setWeight(0.85);
 
         mockMvc.perform(post("/api/tags")
                 .contentType(MediaType.APPLICATION_JSON)

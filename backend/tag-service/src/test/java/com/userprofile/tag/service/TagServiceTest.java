@@ -48,7 +48,7 @@ class TagServiceTest {
         testTag.setTagName("科技爱好者");
         testTag.setCategory("兴趣爱好");
         testTag.setWeight(0.8);
-        testTag.setSource("系统自动");
+        testTag.setSource(UserTag.TagSource.SYSTEM);
         testTag.setActive(true);
         testTag.setExpireTime(LocalDateTime.now().plusMonths(1));
         testTag.setCreateTime(LocalDateTime.now());

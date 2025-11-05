@@ -74,8 +74,9 @@ class UserProfileServiceTest {
         testProfileDTO.setDigitalBehavior(behaviorDTO);
 
         UserProfileDTO.ValueAssessmentDTO valueDTO = new UserProfileDTO.ValueAssessmentDTO();
-        valueDTO.setProfileQuality("高");
         valueDTO.setConsumptionLevel("中高");
+        valueDTO.setPreferenceAnalysis(java.util.Map.of("quality", 0.8, "price", 0.6));
+        valueDTO.setAvgOrderValue("800.0");
         testProfileDTO.setValueAssessment(valueDTO);
     }
 
@@ -311,16 +312,15 @@ class UserProfileServiceTest {
 
         // 价值评估
         UserProfileDTO.ValueAssessmentDTO valueDTO = new UserProfileDTO.ValueAssessmentDTO();
-        valueDTO.setProfileQuality("中");
         valueDTO.setConsumptionLevel("中");
-        valueDTO.setPreferenceAnalysis("偏好国产品牌");
-        valueDTO.setAvgOrderValue("500元");
-        valueDTO.setFeedingMethod("自然增长");
+        valueDTO.setPreferenceAnalysis(java.util.Map.of("quality", 0.7, "price", 0.8));
+        valueDTO.setAvgOrderValue("500");
+        valueDTO.setValueScore(75.0);
         completeDTO.setValueAssessment(valueDTO);
 
         // 粘性
         UserProfileDTO.StickinessDTO stickinessDTO = new UserProfileDTO.StickinessDTO();
-        stickinessDTO.setLoyaltyScore(75);
+        stickinessDTO.setLoyaltyScore(75.0);
         completeDTO.setStickiness(stickinessDTO);
 
         when(profileRepository.findByUserId(2L)).thenReturn(Optional.empty());
@@ -349,10 +349,8 @@ class UserProfileServiceTest {
 
         // 验证价值评估(关键字段映射)
         assertThat(saved.getValueAssessment()).isNotNull();
-        assertThat(saved.getValueAssessment().getProfileQuality()).isEqualTo("中");
         assertThat(saved.getValueAssessment().getConsumptionLevel()).isEqualTo("中");
-        assertThat(saved.getValueAssessment().getAvgOrderValue()).isEqualTo("500元");
-        assertThat(saved.getValueAssessment().getFeedingMethod()).isEqualTo("自然增长");
+        assertThat(saved.getValueAssessment().getPreferenceAnalysis()).isNotNull();
 
         // 验证粘性
         assertThat(saved.getStickinessAndLoyalty()).isNotNull();

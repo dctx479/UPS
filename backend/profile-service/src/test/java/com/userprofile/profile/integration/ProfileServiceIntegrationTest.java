@@ -107,11 +107,11 @@ class ProfileServiceIntegrationTest {
 
         // 价值评估
         UserProfileDTO.ValueAssessmentDTO value = new UserProfileDTO.ValueAssessmentDTO();
-        value.setProfileQuality("HIGH");
         value.setConsumptionLevel("MEDIUM");
-        value.setPreferenceAnalysis("品质导向型用户");
-        value.setAvgOrderValue(500.0);
-        value.setFeedingMethod("混合喂养");
+        // preferenceAnalysis 是 Map<String, Double>
+        value.setPreferenceAnalysis(java.util.Map.of("organic", 0.8, "imported", 0.6));
+        // avgOrderValue 是 String
+        value.setAvgOrderValue("500.0");
         dto.setValueAssessment(value);
 
         // 粘性

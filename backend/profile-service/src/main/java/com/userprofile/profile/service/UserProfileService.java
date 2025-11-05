@@ -66,12 +66,25 @@ public class UserProfileService {
         // 价值评估
         if (dto.getValueAssessment() != null) {
             UserProfile.ValueAssessment valueAssessment = new UserProfile.ValueAssessment();
-            // 修复字段映射错误 - P0-1
-            valueAssessment.setProfileQuality(dto.getValueAssessment().getProfileQuality());
             valueAssessment.setConsumptionLevel(dto.getValueAssessment().getConsumptionLevel());
-            valueAssessment.setPreferenceAnalysis(dto.getValueAssessment().getPreferenceAnalysis());
-            valueAssessment.setAvgOrderValue(dto.getValueAssessment().getAvgOrderValue());
-            valueAssessment.setFeedingMethod(dto.getValueAssessment().getFeedingMethod());
+            // 转换 Map<String, Double> 到 Map<String, Object>
+            if (dto.getValueAssessment().getPreferenceAnalysis() != null) {
+                valueAssessment.setPreferenceAnalysis(
+                    dto.getValueAssessment().getPreferenceAnalysis().entrySet().stream()
+                        .collect(java.util.stream.Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> (Object) e.getValue()
+                        ))
+                );
+            }
+            // avgOrderValue 在 DTO 中是 String,在 Entity 中是 Double
+            if (dto.getValueAssessment().getAvgOrderValue() != null) {
+                try {
+                    valueAssessment.setAvgOrderValue(Double.parseDouble(dto.getValueAssessment().getAvgOrderValue()));
+                } catch (NumberFormatException e) {
+                    log.warn("无法解析avgOrderValue: {}", dto.getValueAssessment().getAvgOrderValue());
+                }
+            }
             profile.setValueAssessment(valueAssessment);
         }
 

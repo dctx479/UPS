@@ -76,7 +76,8 @@ public class ProfileCalculationEngine {
         // 偏好分析权重
         if (assessment.getPreferenceAnalysis() != null) {
             double avgPreference = assessment.getPreferenceAnalysis().values().stream()
-                    .mapToDouble(Double::doubleValue)
+                    .filter(v -> v instanceof Number)
+                    .mapToDouble(v -> ((Number) v).doubleValue())
                     .average()
                     .orElse(0.0);
             score += avgPreference * 30;

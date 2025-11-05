@@ -58,7 +58,7 @@ public class ProfileAutoUpdateScheduler {
 
             // 按用户ID分组
             Map<Long, List<UserEvent>> eventsByUser = unprocessedEvents.stream()
-                    .collect(Collectors.groupBy(UserEvent::getUserId));
+                    .collect(Collectors.groupingBy(UserEvent::getUserId));
 
             int updatedCount = 0;
             for (Map.Entry<Long, List<UserEvent>> entry : eventsByUser.entrySet()) {
